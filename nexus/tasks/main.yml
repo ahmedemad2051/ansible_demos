@@ -1,0 +1,79 @@
+---
+tasks file for nexus
+- name: upgrade all packages
+  yum:
+    name: '*'
+    state: latest
+
+- name: install wget
+  yum:
+    name: wget
+    state: latest
+
+- name: install java jdk
+  yum:
+    name: java-1.8.0-openjdk.x86_64
+    state: latest
+
+- name: Creates app directory
+  file:
+    path: /app
+    state: directory
+
+- name: Download nexus tar
+  get_url:
+    url: https://download.sonatype.com/nexus/3/latest-unix.tar.gz
+    dest: /app/nexus.tar.gz
+
+- name: Extract nexus.tar.gz into /app
+  unarchive:
+    src: /app/nexus.tar.gz
+    dest: /app
+    remote_src: yes
+
+- name: rename nexus directory
+  copy:
+    remote_src: yes
+    src: /app/nexus-3.22.0-02/
+    dest: /app/nexus
+
+- name: Remove old files
+  file:
+    path: /app/nexus-3.22.0-02
+    state: absent
+
+- name: create nexus user'
+  user:
+    name: nexus
+
+- name: Change file ownership, group and permissions
+  file:
+    path: "{{item}}"
+    owner: nexus
+    group: nexus
+  loop:
+    - /app/nexus
+    - /app/sonatype-work
+
+- name: change nexus user
+  lineinfile:
+    dest: /app/nexus/bin/nexus.rc
+    regexp: '^#run_as_user=""$'
+    line: 'run_as_user="nexus"'
+    backrefs: yes
+
+- name: add nexus.vmoptions
+  template:
+    src: nexus.vmoptions
+    dest: /app/nexus/bin/nexus.vmoptions
+
+- name: add nexus.service
+  template:
+    src: nexus.service
+    dest: /etc/systemd/system/nexus.service
+
+- name: start nexus service
+  service:
+    name: nexus
+    state: started
+    enabled: yes

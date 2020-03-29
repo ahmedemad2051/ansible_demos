@@ -1,0 +1,26 @@
+---
+# tasks file for gocd
+- name: Download gocd repo
+  get_url:
+    url: https://download.gocd.org/gocd.repo
+    dest: /etc/yum.repos.d/gocd.repo
+
+- name: install go server
+  yum:
+    name: go-server
+    state: present
+
+- name: start go server service
+  service:
+    name: go-server
+    state: started
+
+- name: install go agent
+  yum:
+    name: go-agent
+    state: present
+
+- name: start go agent service
+  service:
+    name: go-agent
+    state: started
